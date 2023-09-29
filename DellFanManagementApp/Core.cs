@@ -256,7 +256,7 @@ namespace DellFanManagement.App
                     releaseSemaphore = true;
 
                     // Update state.
-                    _state.Update();
+                    _state.Update(this);
 
                     // Take action based on configuration.
                     if (_state.OperationMode == OperationMode.Automatic)

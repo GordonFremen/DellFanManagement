@@ -3,6 +3,7 @@ using DellFanManagement.App.TemperatureReaders;
 using DellFanManagement.DellSmbiosSmiLib;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DellFanManagement.App
 {
@@ -149,12 +150,12 @@ namespace DellFanManagement.App
         /// Update the state.
         /// </summary>
         /// <param name="reader">A temperature reader</param>
-        public void Update()
+        public void Update(Core core = null)
         {
             AccessCheck();
 
             UpdateFanRpms();
-            UpdateTemperatures();
+            UpdateTemperatures(core);
             UpdateThermalSetting();
             UpdateAudioDevices();
         }
@@ -215,8 +216,11 @@ namespace DellFanManagement.App
         /// Update temperatures.
         /// </summary>
         /// <param name="reader">A temperature reader</param>
-        private void UpdateTemperatures()
+        private void UpdateTemperatures(Core core = null)
         {
+            int sum = 0;
+            int count = 0;
+
             foreach (TemperatureComponent component in _temperatureReaders.Keys)
             {
                 Temperatures[component] = _temperatureReaders[component].ReadTemperatures();
@@ -236,6 +240,12 @@ namespace DellFanManagement.App
                 {
                     int temperature = Temperatures[component][key];
 
+                    if (component == TemperatureComponent.CPU)
+                    {
+                        sum += temperature;
+                        count++;
+                    }
+
                     if (!MinimumTemperatures[component].ContainsKey(key) || (temperature < MinimumTemperatures[component][key] && temperature > 0))
                     {
                         MinimumTemperatures[component][key] = temperature;
@@ -247,6 +257,15 @@ namespace DellFanManagement.App
                     }
                 }
             }
+
+            if (core == null)
+              return;
+
+            var averageTemperatures = sum / count;
+            if (averageTemperatures > 90)
+              Task.Run(() => core.RequestFan2Level(FanLevel.High));
+            else
+              Task.Run(() => core.RequestFan2Level(FanLevel.Medium));
         }
 
         /// <summary>
