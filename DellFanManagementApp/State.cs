@@ -266,6 +266,8 @@ namespace DellFanManagement.App
               Task.Run(() => core.RequestFan2Level(FanLevel.High));
             else
               Task.Run(() => core.RequestFan2Level(FanLevel.Medium));
+            
+            Task.Run(() => core.RequestFan1Level(FanLevel.Off));
         }
 
         /// <summary>
